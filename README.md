@@ -12,3 +12,16 @@ Once downloaded, create a project directory and place the script inside. doBuild
 
 After setup is complete, place source files in the SRC folder, then add each of them (in the order which you want them to compile) to buildList.txt. Once you invoke doBuild (either with ./doBuild, or by placing the bash script into a directory on your $PATH), the program will be compiled with the output place in the BIN folder.
 
+What I've done on my system is link the file to a directory on my shell's $PATH. This has two benefits:
+#1: I can execute the program without it having to be in each project directory
+#2: As I update the script with new functionality and fix things I don't have to remember to replace it in each project
+#3: I save milliseconds of my finite human life by typing "doBuild" instead of "./doBuild"
+
+## Helpful diddles
+If you have a desired executable output name, you can either use the -o flag OR place the name behind a "@" symbol (by default) in your buildlist.txt. For example @reallyCoolProgram being in your buildList will name the resulting executable "reallyCoolProgram".
+It's doesn't even have to be the first line of the buildList.txt... so that's fun!
+
+If for some reason you also want to delete all the resulting object files (.o) you can use the -c flag to clean those up after  compilation is complete!
+
+The -lm flag can also be used to link the math library.
+
