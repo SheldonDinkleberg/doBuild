@@ -14,9 +14,12 @@ Once downloaded, create a project directory and place the script inside. doBuild
 
 After setup is complete, place source files in the SRC folder, then add each of them (in the order which you want them to compile) to buildList.txt. Once you invoke doBuild (either with ./doBuild, or by placing the bash script into a directory on your $PATH), the program will be compiled with the output place in the BIN folder.
 
-What I've done on my system is link the file to a directory on my shell's $PATH. This has two benefits:
+What I've done on my system is link the file to a directory on my shell's $PATH. This has three(ish) benefits:
+
 #1: I can execute the program without it having to be in each project directory
+
 #2: As I update the script with new functionality and fix things I don't have to remember to replace it in each project
+
 #3: I save milliseconds of my finite human life by typing "doBuild" instead of "./doBuild"
 
 ## Helpful diddles
