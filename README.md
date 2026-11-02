@@ -3,6 +3,8 @@ I don't really like cmake. I don't have anything against it, but it feels like o
 To solve this "issue", I wrote this little bash script, which I've been using on my linux machine for the last year or so.
 As with many "self made quality of life" programming projects, I've added functionality over time so some of the code may form "sedimentary layers" as I learned more and more about bash throughout.
 
+I should specify that this script has been written on Linux, so it might take some tweaking to get running on windows or mac.
+
 If you have any issues with it, please feel free to leave a comment on this here webzone or send me an email: sheldondinkleberg@zohomail.com
 
 I hope y'all find as much use from it as I've gotten!
@@ -21,7 +23,8 @@ What I've done on my system is link the file to a directory on my shell's $PATH.
 If you have a desired executable output name, you can either use the -o flag OR place the name behind a "@" symbol (by default) in your buildlist.txt. For example @reallyCoolProgram being in your buildList will name the resulting executable "reallyCoolProgram".
 It's doesn't even have to be the first line of the buildList.txt... so that's fun!
 
+You can also add anything (such as project specific linkers or GCC flags) to buildList.txt on a line which starts with an octothorpe (#). Everything following the octothorpe will be added to the final GCC execution, so if you'd like to link raylib you can simply include "#-raylib" in your buildList.txt
+
+Because the math linker is a pretty common parameter, it gets a special flag: "-lm" will include the required flag in the final GCC execution.
+
 If for some reason you also want to delete all the resulting object files (.o) you can use the -c flag to clean those up after  compilation is complete!
-
-The -lm flag can also be used to link the math library.
-
