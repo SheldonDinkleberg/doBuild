@@ -8,6 +8,9 @@
 
 #Character which designates a line in the buildList as the outfile name
 oFileFlagChar="@" 
+#Character which designates a line in the buildList with a linker instruction
+linkerLineChar="#"
+
 
 usage()
 {
@@ -149,7 +152,10 @@ while IFS= read -r line; do
         echo "Found a blank line!"
     elif [[ ${line:0:1} == $oFileFlagChar ]]; then
         outFile="${line:1}"
-        echo "Found outFile name override: $outFile"
+        echo "Found outFile name override: $outFile" 
+    elif [[ ${line:0:1} == $linkerLineChar ]]; then
+	    writeLine="$writeLine ${line:1}"
+        echo "Linking the following: ${line:1}"
     else
         cd $srcDir
 	    gcc $line -c
