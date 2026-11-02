@@ -1,0 +1,198 @@
+#!/usr/bin/env bash
+# An overly complicated script to build and link several C scripts
+# "Make" is for weinies!
+# JRD, 2026
+
+# Current TODO:
+#
+
+#Character which designates a line in the buildList as the outfile name
+oFileFlagChar="@" 
+
+usage()
+{
+	cat << EOF
+	usage: $0 PARAM [-lm|--math LINK MATH] [-o|--out Output] [-h|--help]
+
+	By default will look for a buildList.txt file in its same directory
+	for the list of files to be compiled and linked.
+
+	OPTIONS:
+	    PARAM			Action
+		--------------------------------------------------------------
+		-lm|--math		Links the math library when compiling objects
+		-bl|--list		Allows you to specify another buildList file
+		-c|--clean		Deletes all object files after compilation
+		-o|--out		Allows you to specify an output filename (WIP)
+        -r|--run        Executes the output file following compilation (WIP)
+        -h|--help		Shows this message 
+        --setup 		Creates all required directories for compilation. MUST BE RUN FROM ROOT! (WIP)
+        --bin           
+        --src           Specify that the command is being run from a location which is not the project root
+        --obj           
+EOF
+exit 0
+}
+
+#Checks for all relevant directories and then creates them if they do not exist
+setup()
+{
+    FLAG_MASTER=0
+    FLAG_SRCDIR=0
+    FLAG_BINDIR=0
+    FLAG_OBJDIR=0
+    FLAG_BLLIST=0
+    rootDir=${PWD}
+
+    if [ ! -e "$rootDir/src" ]; then 
+        echo "SRC directory is missing!"
+        FLAG_SRCDIR=1
+        FLAG_MASTER=1
+    fi
+    if [ ! -e "$rootDir/bin" ]; then
+        echo "BIN directory is missing!"
+        FLAG_BINDIR=1
+        FLAG_MASTER=1     
+    fi
+    if [ ! -e "$rootDir/obj" ]; then 
+        echo "OBJ directory is missing!"
+        FLAG_OBJDIR=1
+        FLAG_MASTER=1
+    fi
+    if [ ! -e "$rootDir/buildList.txt" ]; then 
+        echo "Buildlist is missing!"
+        FLAG_BLLIST=1
+        FLAG_MASTER=1
+    fi
+    if [ $FLAG_MASTER -eq 1 ]; then
+        read -p "Continue? (Y/N): " confirm && [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]] || exit 1
+        if [ $FLAG_SRCDIR -eq 1 ]; then
+            mkdir "$rootDir/src"
+        fi
+        if [ $FLAG_BINDIR -eq 1 ]; then
+            mkdir "$rootDir/bin"
+        fi
+        if [ $FLAG_OBJDIR -eq 1 ]; then
+            mkdir "$rootDir/obj"
+        fi
+        if [ $FLAG_BLLIST -eq 1 ]; then
+            touch "$rootDir/buildList.txt"
+            echo "${oFileFlagChar}a.out" > "$rootDir/buildList.txt"
+        fi
+        echo "Missing directories successfully created!"
+    else
+        echo "All project directory components appear to be in order."
+    fi
+
+    exit 0
+}
+
+bong(){
+    echo "bong!"
+    exit 0
+}
+
+# Flags and Parameter Checking
+FLAG_LM=0       # Adds -lm to the final GCC compilation command
+FLAG_CLEANDIR=0 # Remove all .o files from the obj directory
+FLAG_EXEC=0     # Execute the output file after compilation is completed (WIP)
+FLAG_NOTROOT=0  # Designates that the command is not being run from the root dir
+outFile="a.out" # Default outFile name (If not specified in the buildList)
+
+while [ ! $# -eq 0 ]
+do
+	case "$1" in
+		--math | -lm) FLAG_LM=1 ;;
+		--list | -bl) buildList=$2 ;;
+		--clean | -c) FLAG_CLEANDIR=1 ;;
+		--out | -o) outFile=$2 ;;
+        --run | -r) FLAG_EXEC=1 ;;
+		--bing | -b) bong ;;
+		--help | -h) usage ;;
+        --setup) setup ;;
+        --bin | --src | --obj) FLAG_NOTROOT=1 ;;
+	esac
+	shift
+done
+
+if [ $FLAG_NOTROOT -eq 0 ]; then
+    rootDir=${PWD}
+    srcDir="$rootDir/src"
+    binDir="$rootDir/bin"
+    objDir="$rootDir/obj"
+else
+    dir=${PWD}
+    rootDir="$(dirname "$dir")"
+    srcDir="$rootDir/src"
+    binDir="$rootDir/bin"
+    objDir="$rootDir/obj"
+fi
+
+# Check for either form of build list file
+if [ -e "$rootDir/buildList.txt" ]; then 
+	buildList="buildList.txt" 
+elif [ -e "$rootDir/buildList" ]; then 
+	buildList="buildList" 
+else
+    echo "ERROR: Could not find build list"
+    exit 1
+fi
+
+buildList="$rootDir/$buildList"
+
+writeLine=""
+cleanLine=""
+
+while IFS= read -r line; do
+	if [ ${#line} -eq 0 ]; then
+		#If the line is blank, skip it.
+        echo "Found a blank line!"
+    elif [[ ${line:0:1} == $oFileFlagChar ]]; then
+        outFile="${line:1}"
+        echo "Found outFile name override: $outFile"
+    else
+        cd $srcDir
+	    gcc $line -c
+	    if [ $? -ne 0 ]; then
+		    echo "Compilation Failed while doing the following: $line"
+		    exit 1
+	    fi
+	    mv "${line::-1}o" $objDir
+	    writeLine="$writeLine ${line::-1}o"
+    fi
+
+done < $buildList
+
+cleanLine="$writeLine"
+
+if [[ $outFile != "a.out" ]]; then
+	writeLine="$writeLine -o $outFile"
+fi
+
+if [ $FLAG_LM -eq 1 ]; then
+	writeLine="$writeLine -lm"
+fi
+
+writeLine="-Wall -Wextra$writeLine"
+
+echo "Executing: gcc $writeLine"
+
+cd $objDir
+gcc $writeLine
+
+if [ $? -ne 0 ]; then
+    echo "ERROR while running GCC. Aborting..."
+    exit 1
+fi
+
+mv $outFile $binDir
+
+if [ $FLAG_CLEANDIR -eq 1 ]; then
+    echo "Executing: rm $objDir/${cleanLine:1}"
+	rm "$objDir/${cleanLine:1}"
+fi
+
+# Currently broken... not sure why
+if [ $FLAG_EXEC -eq 1 ]; then
+    ."$binDir/$outFile"
+fi
